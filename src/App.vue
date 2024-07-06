@@ -46,7 +46,7 @@ socket.on('message', (message) => {
 })
 
 socket.on('disconnect', (reason) => {
-  addMessage({ text: 'Оффлайн' }, true)
+  addMessage({ text: `Оффлайн: ${reason}` }, true)
 })
 
 function sendMessage() {

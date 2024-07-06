@@ -22,7 +22,7 @@ app.listen(HTTP_PORT, async () => {
 })
 
 const greetingMessage = {
-  text: 'Добро пожаловать в чат-попугай! <br> Он будет повторять всё что вы напишите<br><br>/exit - отключиться'
+  text: 'Добро пожаловать в чат! <br><br><b>#имя_комнаты</b> - подключиться к комнате <br><b>#exit</b> - отключиться'
 }
 
 const farewellMessage = {
@@ -34,11 +34,28 @@ io.on('connection', (socket) => {
   socket.emit('message', greetingMessage)
 
   socket.on('message', (message) => {
-    if (message != '/exit') {
-      socket.emit('message', { text: message })
+    const messageText = message.trim()
+
+    if (messageText.startsWith('#')) {
+      if (messageText == '#exit') {
+        socket.emit('message', farewellMessage)
+        socket.disconnect()
+      } else {
+        if (socket.rooms.has(messageText)) {
+          socket.emit('message', { text: `Уже в комнате ${messageText}` })
+        } else {
+          socket.rooms.forEach((room) => {
+            if (room.startsWith('#')) socket.leave(room)
+          })
+
+          socket.join(messageText)
+          socket.emit('message', { text: `Выполнено подключение к ${messageText}` })
+        }
+      }
     } else {
-      socket.emit('message', farewellMessage)
-      socket.disconnect()
+      socket.rooms.forEach((room) => {
+        if (room.startsWith('#')) socket.to(room).emit('message', { text: messageText })
+      })
     }
   })
 })
